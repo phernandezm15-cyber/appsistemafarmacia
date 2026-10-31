@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="50%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#090d16" />
+    </linearGradient>
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <!-- Base background squircle -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)" />
+  <rect x="12" y="12" width="488" height="488" rx="116" fill="none" stroke="url(#emeraldGrad)" stroke-width="4" stroke-opacity="0.3" />
+
+  <!-- Pharmacy Cross & Pill emblem -->
+  <g transform="translate(256, 256)">
+    <!-- Subtle glow ring -->
+    <circle r="160" fill="none" stroke="#10b981" stroke-width="2" stroke-opacity="0.25" stroke-dasharray="8 8" />
+    
+    <!-- Medical Cross with Rounded Corners -->
+    <rect x="-38" y="-120" width="76" height="240" rx="28" fill="url(#emeraldGrad)" filter="url(#glow)" />
+    <rect x="-120" y="-38" width="240" height="76" rx="28" fill="url(#emeraldGrad)" filter="url(#glow)" />
+
+    <!-- Center capsule / pill accent in cyan -->
+    <g transform="rotate(-45)">
+      <rect x="-24" y="-55" width="48" height="110" rx="24" fill="#ffffff" fill-opacity="0.95" />
+      <rect x="-24" y="-55" width="48" height="55" rx="24" fill="url(#cyanGrad)" />
+      <line x1="-24" y1="0" x2="24" y2="0" stroke="#0f172a" stroke-width="3" stroke-opacity="0.4" />
+    </g>
+
+    <!-- Star of life pulse dots -->
+    <circle cx="0" cy="-145" r="7" fill="#34d399" />
+    <circle cx="145" cy="0" r="7" fill="#38bdf8" />
+    <circle cx="0" cy="145" r="7" fill="#34d399" />
+    <circle cx="-145" cy="0" r="7" fill="#38bdf8" />
+  </g>
+</svg>

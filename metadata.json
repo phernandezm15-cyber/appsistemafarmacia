@@ -1,0 +1,9 @@
+{
+  "name": "FarmaciaDB Móvil & APK",
+  "description": "Aplicación móvil y APK Android para gestión farmacéutica: POS, inventario, ventas, compras, clientes y asistente clínico.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
