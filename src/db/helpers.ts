@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { db } from './index.ts';
 import {
   medicamentos,
@@ -11,8 +13,11 @@ import {
 import { eq, desc, sql } from 'drizzle-orm';
 import { INITIAL_MEDS, INITIAL_PROVS, INITIAL_CLIENTS } from './seed.ts';
 
-// In-memory fallback state to ensure 100% operational functionality
-// even before or without external PostgreSQL provisioned
+// Persistent storage file paths
+const DATA_DIR = path.resolve(process.cwd(), 'data');
+const DB_FILE = path.join(DATA_DIR, 'farmacia_database.json');
+
+// Default initial state
 let memMeds: any[] = INITIAL_MEDS.map(m => ({
   ...m,
   precio_compra: Number(m.precioCompra),
@@ -50,7 +55,7 @@ let memUsers: any[] = [
   { id: 2, email: 'empleado@farmacia.gt', password: 'empleado123', nombre: 'María López', role: 'empleado' },
 ];
 
-// Initialize sample sales in memory
+// Seed sales if empty
 for (let i = 0; i < 15; i++) {
   const med = memMeds[i % memMeds.length];
   const qty = 1 + (i % 3);
@@ -81,13 +86,68 @@ for (let i = 0; i < 15; i++) {
   });
 }
 
+// Function to save state to persistent database JSON file
+export function savePersistentState() {
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    fs.writeFileSync(
+      DB_FILE,
+      JSON.stringify(
+        {
+          version: "1.0",
+          updatedAt: new Date().toISOString(),
+          meds: memMeds,
+          provs: memProvs,
+          clients: memClients,
+          compras: memCompras,
+          ventas: memVentas,
+          users: memUsers,
+        },
+        null,
+        2
+      ),
+      'utf-8'
+    );
+  } catch (err) {
+    console.error('[Database Save Error]:', err);
+  }
+}
+
+// Function to load state from persistent database JSON file
+export function loadPersistentState() {
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      const raw = fs.readFileSync(DB_FILE, 'utf-8');
+      const data = JSON.parse(raw);
+      if (Array.isArray(data.meds) && data.meds.length > 0) memMeds = data.meds;
+      if (Array.isArray(data.provs) && data.provs.length > 0) memProvs = data.provs;
+      if (Array.isArray(data.clients) && data.clients.length > 0) memClients = data.clients;
+      if (Array.isArray(data.compras)) memCompras = data.compras;
+      if (Array.isArray(data.ventas) && data.ventas.length > 0) memVentas = data.ventas;
+      if (Array.isArray(data.users) && data.users.length > 0) memUsers = data.users;
+      console.log(`[Database Loaded] ${memMeds.length} meds, ${memVentas.length} ventas, ${memClients.length} clients.`);
+    } else {
+      savePersistentState();
+    }
+  } catch (err) {
+    console.error('[Database Load Error]:', err);
+  }
+}
+
+// Load on module startup
+loadPersistentState();
+
 // ----------------- MEDICAMENTOS -----------------
 export async function getMedicamentos() {
   try {
-    return await db.select().from(medicamentos).orderBy(medicamentos.id);
+    const list = await db.select().from(medicamentos).orderBy(medicamentos.id);
+    if (list && list.length > 0) return list;
   } catch (error) {
-    return memMeds;
+    // fallback
   }
+  return memMeds;
 }
 
 export async function upsertMedicamento(data: any) {
@@ -95,8 +155,9 @@ export async function upsertMedicamento(data: any) {
   const precioCompra = data.precioCompra != null ? String(data.precioCompra) : data.precio_compra != null ? String(data.precio_compra) : '0.00';
   const precioVenta = data.precioVenta != null ? String(data.precioVenta) : data.precio_venta != null ? String(data.precio_venta) : '0.00';
 
+  let result = null;
   try {
-    return await db
+    result = await db
       .insert(medicamentos)
       .values({
         id,
@@ -124,51 +185,61 @@ export async function upsertMedicamento(data: any) {
       })
       .returning();
   } catch (error) {
-    const existingIdx = memMeds.findIndex((m) => m.id === id);
-    const item = {
-      id,
-      codigo: data.codigo || `750${Date.now().toString().slice(-8)}`,
-      nombre: data.nombre,
-      principio: data.principio || '',
-      categoria: data.categoria || 'General',
-      caducidad: data.caducidad || new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10),
-      precioCompra,
-      precioVenta,
-      precio_compra: Number(precioCompra),
-      precio_venta: Number(precioVenta),
-      stock: Number(data.stock ?? 0),
-    };
-    if (existingIdx >= 0) {
-      memMeds[existingIdx] = item;
-    } else {
-      memMeds.push(item);
-    }
-    return [item];
+    // handled below
   }
+
+  const existingIdx = memMeds.findIndex((m) => m.id === id);
+  const item = {
+    id,
+    codigo: data.codigo || `750${Date.now().toString().slice(-8)}`,
+    nombre: data.nombre,
+    principio: data.principio || '',
+    categoria: data.categoria || 'General',
+    caducidad: data.caducidad || new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10),
+    precioCompra,
+    precioVenta,
+    precio_compra: Number(precioCompra),
+    precio_venta: Number(precioVenta),
+    stock: Number(data.stock ?? 0),
+  };
+
+  if (existingIdx >= 0) {
+    memMeds[existingIdx] = item;
+  } else {
+    memMeds.push(item);
+  }
+  savePersistentState();
+
+  return result || [item];
 }
 
 export async function deleteMedicamento(id: string) {
   try {
-    return await db.delete(medicamentos).where(eq(medicamentos.id, id)).returning();
+    await db.delete(medicamentos).where(eq(medicamentos.id, id));
   } catch (error) {
-    memMeds = memMeds.filter((m) => m.id !== id);
-    return [{ id }];
+    // fallback
   }
+  memMeds = memMeds.filter((m) => m.id !== id);
+  savePersistentState();
+  return [{ id }];
 }
 
 // ----------------- CLIENTES -----------------
 export async function getClientes() {
   try {
-    return await db.select().from(clientes).orderBy(clientes.nombre);
+    const list = await db.select().from(clientes).orderBy(clientes.nombre);
+    if (list && list.length > 0) return list;
   } catch (error) {
-    return memClients;
+    // fallback
   }
+  return memClients;
 }
 
 export async function upsertCliente(data: any) {
   const id = data.id || `CLI-${Date.now().toString().slice(-4)}`;
+  let result = null;
   try {
-    return await db
+    result = await db
       .insert(clientes)
       .values({
         id,
@@ -188,30 +259,36 @@ export async function upsertCliente(data: any) {
       })
       .returning();
   } catch (error) {
-    const existingIdx = memClients.findIndex((c) => c.id === id);
-    const item = {
-      id,
-      nombre: data.nombre,
-      telefono: data.telefono || '',
-      nit: data.nit || 'CF',
-      puntos: Number(data.puntos ?? 0),
-    };
-    if (existingIdx >= 0) {
-      memClients[existingIdx] = item;
-    } else {
-      memClients.push(item);
-    }
-    return [item];
+    // fallback
   }
+
+  const existingIdx = memClients.findIndex((c) => c.id === id);
+  const item = {
+    id,
+    nombre: data.nombre,
+    telefono: data.telefono || '',
+    nit: data.nit || 'CF',
+    puntos: Number(data.puntos ?? 0),
+  };
+  if (existingIdx >= 0) {
+    memClients[existingIdx] = item;
+  } else {
+    memClients.push(item);
+  }
+  savePersistentState();
+
+  return result || [item];
 }
 
 // ----------------- PROVEEDORES -----------------
 export async function getProveedores() {
   try {
-    return await db.select().from(proveedores).orderBy(proveedores.empresa);
+    const list = await db.select().from(proveedores).orderBy(proveedores.empresa);
+    if (list && list.length > 0) return list;
   } catch (error) {
-    return memProvs;
+    // fallback
   }
+  return memProvs;
 }
 
 export async function upsertProveedor(data: any) {
@@ -224,8 +301,9 @@ export async function upsertProveedor(data: any) {
     correo: data.correo || '',
     direccion: data.direccion || '',
   };
+  let result = null;
   try {
-    return await db
+    result = await db
       .insert(proveedores)
       .values(payload)
       .onConflictDoUpdate({
@@ -234,32 +312,40 @@ export async function upsertProveedor(data: any) {
       })
       .returning();
   } catch (error) {
-    const idx = memProvs.findIndex((p) => p.id === id);
-    if (idx >= 0) {
-      memProvs[idx] = payload;
-    } else {
-      memProvs.push(payload);
-    }
-    return [payload];
+    // fallback
   }
+
+  const idx = memProvs.findIndex((p) => p.id === id);
+  if (idx >= 0) {
+    memProvs[idx] = payload;
+  } else {
+    memProvs.push(payload);
+  }
+  savePersistentState();
+
+  return result || [payload];
 }
 
 export async function deleteProveedor(id: string) {
   try {
-    return await db.delete(proveedores).where(eq(proveedores.id, id)).returning();
+    await db.delete(proveedores).where(eq(proveedores.id, id));
   } catch (error) {
-    memProvs = memProvs.filter((p) => p.id !== id);
-    return [{ id }];
+    // fallback
   }
+  memProvs = memProvs.filter((p) => p.id !== id);
+  savePersistentState();
+  return [{ id }];
 }
 
 // ----------------- COMPRAS -----------------
 export async function getCompras() {
   try {
-    return await db.select().from(compras).orderBy(desc(compras.fecha));
+    const list = await db.select().from(compras).orderBy(desc(compras.fecha));
+    if (list && list.length > 0) return list;
   } catch (error) {
-    return memCompras;
+    // fallback
   }
+  return memCompras;
 }
 
 export async function createCompra(data: {
@@ -273,6 +359,7 @@ export async function createCompra(data: {
   nota?: string | null;
 }) {
   const id = data.id || `uuid-cmp-${Date.now()}`;
+  let result = null;
   try {
     const [c] = await db
       .insert(compras)
@@ -298,95 +385,101 @@ export async function createCompra(data: {
         })
         .where(eq(medicamentos.id, data.medId));
     }
-
-    return c;
+    result = c;
   } catch (error) {
-    const item = {
-      id,
-      codigo: data.codigo,
-      fecha: new Date().toISOString(),
-      proveedorId: data.proveedorId,
-      medId: data.medId,
-      cantidad: data.cantidad,
-      costo: data.costo,
-      estado: data.estado,
-      nota: data.nota || null,
-    };
-    memCompras.unshift(item);
-    if (data.estado === 'Completado') {
-      const med = memMeds.find((m) => m.id === data.medId);
-      if (med) {
-        med.stock = (med.stock || 0) + data.cantidad;
-        med.precio_compra = data.costo;
-        med.precioCompra = String(data.costo);
-      }
-    }
-    return item;
+    // fallback
   }
+
+  const item = {
+    id,
+    codigo: data.codigo,
+    fecha: new Date().toISOString(),
+    proveedorId: data.proveedorId,
+    medId: data.medId,
+    cantidad: data.cantidad,
+    costo: data.costo,
+    estado: data.estado,
+    nota: data.nota || null,
+  };
+  memCompras.unshift(item);
+
+  if (data.estado === 'Completado') {
+    const med = memMeds.find((m) => m.id === data.medId);
+    if (med) {
+      med.stock = (med.stock || 0) + data.cantidad;
+      med.precio_compra = data.costo;
+      med.precioCompra = String(data.costo);
+    }
+  }
+  savePersistentState();
+
+  return result || item;
 }
 
 export async function updateCompraEstado(id: string, nuevoEstado: string) {
   try {
-    return await db.transaction(async (tx) => {
+    await db.transaction(async (tx) => {
       const [compra] = await tx
         .select()
         .from(compras)
         .where(eq(compras.id, id));
 
-      if (!compra) throw new Error('Orden de compra no encontrada');
-      if (compra.estado === nuevoEstado) return compra;
-
-      const [updated] = await tx
-        .update(compras)
-        .set({ estado: nuevoEstado })
-        .where(eq(compras.id, id))
-        .returning();
-
-      if (nuevoEstado === 'Completado' && compra.estado !== 'Completado' && compra.medId) {
+      if (compra) {
         await tx
-          .update(medicamentos)
-          .set({
-            stock: sql`${medicamentos.stock} + ${compra.cantidad}`,
-            precioCompra: String(compra.costo),
-          })
-          .where(eq(medicamentos.id, compra.medId as string));
-      }
+          .update(compras)
+          .set({ estado: nuevoEstado })
+          .where(eq(compras.id, id));
 
-      return updated;
-    });
-  } catch (error) {
-    const compra = memCompras.find((c) => c.id === id);
-    if (compra) {
-      compra.estado = nuevoEstado;
-      if (nuevoEstado === 'Completado') {
-        const med = memMeds.find((m) => m.id === compra.medId);
-        if (med) {
-          med.stock = (med.stock || 0) + compra.cantidad;
-          med.precio_compra = compra.costo;
+        if (nuevoEstado === 'Completado' && compra.estado !== 'Completado' && compra.medId) {
+          await tx
+            .update(medicamentos)
+            .set({
+              stock: sql`${medicamentos.stock} + ${compra.cantidad}`,
+              precioCompra: String(compra.costo),
+            })
+            .where(eq(medicamentos.id, compra.medId as string));
         }
       }
-      return compra;
-    }
-    return null;
+    });
+  } catch (error) {
+    // fallback
   }
+
+  const compra = memCompras.find((c) => c.id === id);
+  if (compra) {
+    compra.estado = nuevoEstado;
+    if (nuevoEstado === 'Completado') {
+      const med = memMeds.find((m) => m.id === compra.medId);
+      if (med) {
+        med.stock = (med.stock || 0) + compra.cantidad;
+        med.precio_compra = compra.costo;
+      }
+    }
+    savePersistentState();
+    return compra;
+  }
+  return null;
 }
 
 // ----------------- VENTAS (POS) -----------------
 export async function getVentas() {
   try {
     const listVentas = await db.select().from(ventas).orderBy(desc(ventas.fecha)).limit(100);
-    const result = [];
-    for (const v of listVentas) {
-      const items = await db.select().from(ventaItems).where(eq(ventaItems.ventaId, v.id));
-      result.push({
-        ...v,
-        items,
-      });
+    if (listVentas && listVentas.length > 0) {
+      const result = [];
+      for (const v of listVentas) {
+        const items = await db.select().from(ventaItems).where(eq(ventaItems.ventaId, v.id));
+        result.push({
+          ...v,
+          items,
+        });
+      }
+      return result;
     }
-    return result;
   } catch (error) {
-    return memVentas;
+    // fallback
   }
+  return memVentas;
 }
 
 export async function createVentaTransaccional(
@@ -410,8 +503,9 @@ export async function createVentaTransaccional(
     precio: number;
   }[]
 ) {
+  let dbResult = null;
   try {
-    return await db.transaction(async (tx) => {
+    dbResult = await db.transaction(async (tx) => {
       const [nuevaVenta] = await tx
         .insert(ventas)
         .values({
@@ -458,41 +552,46 @@ export async function createVentaTransaccional(
       return nuevaVenta;
     });
   } catch (error) {
-    const item = {
-      ...ventaData,
-      fecha: new Date().toISOString(),
-      items: [...items],
-    };
-    memVentas.unshift(item);
-
-    // Decrement stock in memory
-    for (const line of items) {
-      const m = memMeds.find((x) => x.id === line.medId);
-      if (m) {
-        m.stock = Math.max(0, (m.stock || 0) - line.cantidad);
-      }
-    }
-
-    // Add points in memory
-    if (ventaData.clienteId && ventaData.puntos > 0) {
-      const c = memClients.find((x) => x.id === ventaData.clienteId);
-      if (c) {
-        c.puntos = (c.puntos || 0) + ventaData.puntos;
-      }
-    }
-
-    return item;
+    // handled in fallback below
   }
+
+  // Update in-memory persistent store
+  const item = {
+    ...ventaData,
+    fecha: new Date().toISOString(),
+    items: [...items],
+  };
+  memVentas.unshift(item);
+
+  // Decrement stock in catalog
+  for (const line of items) {
+    const m = memMeds.find((x) => x.id === line.medId);
+    if (m) {
+      m.stock = Math.max(0, (m.stock || 0) - line.cantidad);
+    }
+  }
+
+  // Add points to customer
+  if (ventaData.clienteId && ventaData.puntos > 0) {
+    const c = memClients.find((x) => x.id === ventaData.clienteId);
+    if (c) {
+      c.puntos = (c.puntos || 0) + ventaData.puntos;
+    }
+  }
+
+  savePersistentState();
+  return dbResult || item;
 }
 
 // ----------------- USUARIOS & AUTH -----------------
 export async function getUsers() {
   try {
     const list = await db.select().from(users).orderBy(users.id);
-    return list.map(({ password: _p, ...u }) => u);
+    if (list && list.length > 0) return list.map(({ password: _p, ...u }) => u);
   } catch (error) {
-    return memUsers.map(({ password: _p, ...u }) => u);
+    // fallback
   }
+  return memUsers.map(({ password: _p, ...u }) => u);
 }
 
 export async function getUserByEmail(email: string) {
@@ -513,6 +612,7 @@ export async function createUser(data: {
   role: string;
 }) {
   const normEmail = data.email.toLowerCase().trim();
+  let dbResult = null;
   try {
     const [u] = await db
       .insert(users)
@@ -524,26 +624,32 @@ export async function createUser(data: {
       })
       .returning();
     const { password: _p, ...safeUser } = u;
-    return safeUser;
+    dbResult = safeUser;
   } catch (error) {
-    const newUser = {
-      id: memUsers.length + 1,
-      email: normEmail,
-      password: data.password,
-      nombre: data.nombre.trim(),
-      role: data.role,
-    };
-    memUsers.push(newUser);
-    const { password: _p, ...safeUser } = newUser;
-    return safeUser;
+    // fallback
   }
+
+  const newUser = {
+    id: memUsers.length + 1,
+    email: normEmail,
+    password: data.password,
+    nombre: data.nombre.trim(),
+    role: data.role,
+  };
+  memUsers.push(newUser);
+  savePersistentState();
+
+  const { password: _p, ...safeUser } = newUser;
+  return dbResult || safeUser;
 }
 
 export async function deleteUser(id: number) {
   try {
-    return await db.delete(users).where(eq(users.id, id)).returning();
+    await db.delete(users).where(eq(users.id, id));
   } catch (error) {
-    memUsers = memUsers.filter((u) => u.id !== id);
-    return [{ id }];
+    // fallback
   }
+  memUsers = memUsers.filter((u) => u.id !== id);
+  savePersistentState();
+  return [{ id }];
 }

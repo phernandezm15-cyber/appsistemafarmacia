@@ -177,10 +177,10 @@ function POS() {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input ref={searchRef} placeholder="Buscar producto... (Ctrl+K)" className="pl-9" value={query} onChange={(e) => setQuery(e.target.value)} />
             </div>
-            <VoiceButton onText={setQuery} />
+            <VoiceButton onText={setQuery} meds={meds} />
             <form onSubmit={scanCode} className="relative">
               <ScanBarcode className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Escáner de código de barras (simulado)" className="pl-9 font-mono" value={code} onChange={(e) => setCode(e.target.value)} />
+              <Input placeholder="Código de barras..." className="pl-9 font-mono" value={code} onChange={(e) => setCode(e.target.value)} />
             </form>
             <Button variant="hero" onClick={startScan} aria-label="Escanear con cámara">
               <ScanBarcode /> Escanear

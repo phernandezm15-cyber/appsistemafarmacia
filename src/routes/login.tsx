@@ -214,7 +214,7 @@ function Login() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="admin@farmacia.gt o tu@correo.com"
+                    placeholder="tu@correo.com"
                     className="pl-9"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -229,36 +229,9 @@ function Login() {
                 <Err m={errors.pass} />
               </div>
 
-              <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>
+              <Button type="submit" variant="hero" size="lg" className="w-full mt-2" disabled={loading}>
                 {loading ? <><Loader2 className="animate-spin" /> Ingresando...</> : "Ingresar al Sistema"}
               </Button>
-
-              <div className="rounded-2xl border border-border/80 bg-muted/40 p-3.5 text-xs text-muted-foreground space-y-2">
-                <p className="font-bold text-foreground flex items-center gap-1.5">
-                  <ShieldCheck className="h-4 w-4 text-primary" /> Cuentas Demostrativas Rápidas
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div
-                    onClick={() => { setEmail("admin@farmacia.gt"); setPass("admin123"); }}
-                    className="cursor-pointer rounded-xl border border-primary/30 bg-primary/5 p-2 hover:bg-primary/10 transition-colors"
-                  >
-                    <p className="font-bold text-primary flex items-center gap-1">👑 Administrador</p>
-                    <p className="text-[11px] text-foreground font-mono">admin@farmacia.gt</p>
-                    <p className="text-[11px] text-muted-foreground">Clave: admin123 (Acceso Total)</p>
-                  </div>
-                  <div
-                    onClick={() => { setEmail("empleado@farmacia.gt"); setPass("empleado123"); }}
-                    className="cursor-pointer rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-2 hover:bg-emerald-500/10 transition-colors"
-                  >
-                    <p className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">👤 Empleado</p>
-                    <p className="text-[11px] text-foreground font-mono">empleado@farmacia.gt</p>
-                    <p className="text-[11px] text-muted-foreground">Clave: empleado123 (Caja & Ventas)</p>
-                  </div>
-                </div>
-                <p className="text-[11px] italic text-muted-foreground text-center">
-                  💡 Haz clic en cualquiera de las dos tarjetas para auto-completar los datos
-                </p>
-              </div>
             </form>
           </TabsContent>
 
@@ -271,7 +244,7 @@ function Login() {
                   <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     id="rnombre"
-                    placeholder="Ej. Carlos Méndez"
+                    placeholder="Nombre completo..."
                     className="pl-9"
                     value={reg.nombre}
                     onChange={(e) => setReg({ ...reg, nombre: e.target.value })}
@@ -287,7 +260,7 @@ function Login() {
                   <Input
                     id="rcorreo"
                     type="email"
-                    placeholder="carlos@farmacia.gt"
+                    placeholder="tu@correo.com"
                     className="pl-9"
                     value={reg.correo}
                     onChange={(e) => setReg({ ...reg, correo: e.target.value })}

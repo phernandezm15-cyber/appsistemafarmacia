@@ -181,7 +181,75 @@ export function Chatbot() {
     let gotNativeSpeech = false;
     audioChunksRef.current = [];
 
-    // Try getting user media
+    // 1. Native Web Speech (Android Chrome, Edge, Safari) - Fast & Zero conflict
+    const W = window as any;
+    const SpeechRec = W.SpeechRecognition || W.webkitSpeechRecognition;
+    if (SpeechRec) {
+      try {
+        const rec = new SpeechRec();
+        const navLang = typeof navigator !== "undefined" ? (navigator.language || "es-GT") : "es-GT";
+        rec.lang = navLang.toLowerCase().startsWith("es") ? navLang : "es-GT";
+        rec.continuous = true;
+        rec.interimResults = true;
+        rec.maxAlternatives = 2;
+
+        let pauseTimer: any = null;
+        let lastSpoken = "";
+
+        rec.onstart = () => {
+          setIsListening(true);
+          toast.info("Escuchando...", { description: "Habla tu consulta para el asistente" });
+          try {
+            if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(40);
+          } catch {}
+        };
+
+        rec.onresult = (e: any) => {
+          let text = "";
+          for (let i = 0; i < e.results.length; i++) {
+            text += (e.results[i][0]?.transcript || "") + " ";
+          }
+          const trimmed = text.trim();
+          if (trimmed) {
+            lastSpoken = trimmed;
+            setInput(trimmed);
+
+            // Fast 500ms silence auto-commit
+            if (pauseTimer) clearTimeout(pauseTimer);
+            pauseTimer = setTimeout(() => {
+              if (lastSpoken) {
+                try { rec.stop(); } catch {}
+                setIsListening(false);
+                send(lastSpoken);
+              }
+            }, 550);
+          }
+        };
+
+        rec.onerror = (e: any) => {
+          console.warn("[Chatbot SpeechRec Error]:", e.error);
+          setIsListening(false);
+          if (pauseTimer) clearTimeout(pauseTimer);
+        };
+
+        rec.onend = () => {
+          setIsListening(false);
+          if (pauseTimer) clearTimeout(pauseTimer);
+          if (lastSpoken && !gotNativeSpeech) {
+            gotNativeSpeech = true;
+            send(lastSpoken);
+          }
+        };
+
+        recognitionRef.current = rec;
+        rec.start();
+        return;
+      } catch (err) {
+        console.warn("[SpeechRecognition fallback]:", err);
+      }
+    }
+
+    // 2. MediaRecorder fallback for browsers without native SpeechRecognition
     let stream: MediaStream | null = null;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -195,41 +263,6 @@ export function Chatbot() {
 
     setIsListening(true);
     toast.info("Escuchando...", { description: "Habla tu consulta para el asistente" });
-
-    // 1. Native Web Speech (Chrome / Edge)
-    const W = window as any;
-    const SpeechRec = W.SpeechRecognition || W.webkitSpeechRecognition;
-    if (SpeechRec) {
-      try {
-        const rec = new SpeechRec();
-        rec.lang = "es-GT";
-        rec.interimResults = false;
-        rec.maxAlternatives = 1;
-
-        rec.onresult = (e: any) => {
-          const transcript = e.results[0]?.[0]?.transcript;
-          if (transcript) {
-            gotNativeSpeech = true;
-            setInput(transcript);
-            setIsListening(false);
-            send(transcript);
-          }
-        };
-
-        rec.onerror = () => {
-          // Opera GX or network error - MediaRecorder fallback handles it
-        };
-
-        rec.onend = () => {
-          if (gotNativeSpeech) {
-            setIsListening(false);
-          }
-        };
-
-        recognitionRef.current = rec;
-        rec.start();
-      } catch {}
-    }
 
     // 2. MediaRecorder universal fallback (Opera GX, Firefox, Safari)
     try {

@@ -68,7 +68,19 @@ async function getWhisperPipeline() {
   return whisperPromise;
 }
 
+// CORS middleware to allow preview iframe and mobile PWA requests
+app.use((_req: Request, res: Response, next: NextFunction) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  if (_req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
 // Server-side Gemini initialization
 const apiKey = process.env.GEMINI_API_KEY;

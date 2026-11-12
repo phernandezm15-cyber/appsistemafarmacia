@@ -47,10 +47,7 @@ export function UsersModal({ trigger }: { trigger?: React.ReactNode }) {
           created_at: u.created_at || "2026-01-01",
         }));
       }
-      return [
-        { id: "usr-admin", nombre: "Admin General", email: "admin@farmacia.gt", role: "admin" },
-        { id: "usr-emp", nombre: "María López", email: "empleado@farmacia.gt", role: "empleado" },
-      ];
+      return [];
     },
     enabled: open,
   });

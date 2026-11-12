@@ -1,0 +1,752 @@
+{
+  "version": "1.0",
+  "updatedAt": "2026-11-12T01:53:05.872Z",
+  "meds": [
+    {
+      "id": "MED-001",
+      "codigo": "75010000010",
+      "nombre": "Panadol Extra 500mg",
+      "principio": "Paracetamol",
+      "categoria": "Analgésicos",
+      "caducidad": "2027-12-04",
+      "precioCompra": "8.50",
+      "precioVenta": "14.00",
+      "precio_compra": 8.5,
+      "precio_venta": 14,
+      "stock": 119
+    },
+    {
+      "id": "MED-002",
+      "codigo": "75010079191",
+      "nombre": "Advil",
+      "principio": "Ibuprofeno 400mg",
+      "categoria": "Antiinflamatorios",
+      "caducidad": "2027-09-08",
+      "precioCompra": "12.00",
+      "precioVenta": "19.50",
+      "stock": 85,
+      "precio_compra": 12,
+      "precio_venta": 19.5
+    },
+    {
+      "id": "MED-003",
+      "codigo": "75010158382",
+      "nombre": "Amoxil",
+      "principio": "Amoxicilina 500mg",
+      "categoria": "Antibióticos",
+      "caducidad": "2026-12-02",
+      "precioCompra": "35.00",
+      "precioVenta": "55.00",
+      "stock": 6,
+      "precio_compra": 35,
+      "precio_venta": 55
+    },
+    {
+      "id": "MED-004",
+      "codigo": "75010237573",
+      "nombre": "Clarityne",
+      "principio": "Loratadina 10mg",
+      "categoria": "Antihistamínicos",
+      "caducidad": "2027-07-20",
+      "precioCompra": "22.00",
+      "precioVenta": "34.00",
+      "stock": 48,
+      "precio_compra": 22,
+      "precio_venta": 34
+    },
+    {
+      "id": "MED-005",
+      "codigo": "75010316764",
+      "nombre": "Omeprazol MK",
+      "principio": "Omeprazol 20mg",
+      "categoria": "Gastrointestinal",
+      "caducidad": "2027-05-11",
+      "precioCompra": "15.00",
+      "precioVenta": "25.00",
+      "stock": 64,
+      "precio_compra": 15,
+      "precio_venta": 25
+    },
+    {
+      "id": "MED-006",
+      "codigo": "75010395955",
+      "nombre": "Losartán Denk",
+      "principio": "Losartán 50mg",
+      "categoria": "Cardiovascular",
+      "caducidad": "2027-11-12",
+      "precioCompra": "28.00",
+      "precioVenta": "42.00",
+      "stock": 8,
+      "precio_compra": 28,
+      "precio_venta": 42
+    },
+    {
+      "id": "MED-007",
+      "codigo": "75010475146",
+      "nombre": "Centrum",
+      "principio": "Multivitamínico",
+      "categoria": "Vitaminas",
+      "caducidad": "2028-03-26",
+      "precioCompra": "95.00",
+      "precioVenta": "139.00",
+      "stock": 30,
+      "precio_compra": 95,
+      "precio_venta": 139
+    },
+    {
+      "id": "MED-008",
+      "codigo": "75010554337",
+      "nombre": "Ventolin",
+      "principio": "Salbutamol 100mcg",
+      "categoria": "Respiratorio",
+      "caducidad": "2026-12-07",
+      "precioCompra": "48.00",
+      "precioVenta": "72.00",
+      "stock": 22,
+      "precio_compra": 48,
+      "precio_venta": 72
+    },
+    {
+      "id": "MED-009",
+      "codigo": "75010633528",
+      "nombre": "Aspirina Bayer",
+      "principio": "Ácido acetilsalicílico",
+      "categoria": "Analgésicos",
+      "caducidad": "2028-07-04",
+      "precioCompra": "6.00",
+      "precioVenta": "10.00",
+      "stock": 150,
+      "precio_compra": 6,
+      "precio_venta": 10
+    },
+    {
+      "id": "MED-010",
+      "codigo": "75010712719",
+      "nombre": "Cipro",
+      "principio": "Ciprofloxacino 500mg",
+      "categoria": "Antibióticos",
+      "caducidad": "2027-06-10",
+      "precioCompra": "40.00",
+      "precioVenta": "62.00",
+      "stock": 5,
+      "precio_compra": 40,
+      "precio_venta": 62
+    },
+    {
+      "id": "MED-011",
+      "codigo": "75010791900",
+      "nombre": "Voltaren",
+      "principio": "Diclofenaco 50mg",
+      "categoria": "Antiinflamatorios",
+      "caducidad": "2026-11-27",
+      "precioCompra": "18.00",
+      "precioVenta": "29.00",
+      "stock": 40,
+      "precio_compra": 18,
+      "precio_venta": 29
+    },
+    {
+      "id": "MED-012",
+      "codigo": "75010871091",
+      "nombre": "Allegra",
+      "principio": "Fexofenadina 180mg",
+      "categoria": "Antihistamínicos",
+      "caducidad": "2027-09-28",
+      "precioCompra": "45.00",
+      "precioVenta": "68.00",
+      "stock": 26,
+      "precio_compra": 45,
+      "precio_venta": 68
+    },
+    {
+      "id": "MED-013",
+      "codigo": "75010950282",
+      "nombre": "Gaviscon",
+      "principio": "Alginato de sodio",
+      "categoria": "Gastrointestinal",
+      "caducidad": "2027-04-01",
+      "precioCompra": "38.00",
+      "precioVenta": "58.00",
+      "stock": 18,
+      "precio_compra": 38,
+      "precio_venta": 58
+    },
+    {
+      "id": "MED-014",
+      "codigo": "75011029473",
+      "nombre": "Redoxon",
+      "principio": "Vitamina C 1g",
+      "categoria": "Vitaminas",
+      "caducidad": "2026-12-10",
+      "precioCompra": "30.00",
+      "precioVenta": "46.00",
+      "stock": 55,
+      "precio_compra": 30,
+      "precio_venta": 46
+    },
+    {
+      "id": "MED-015",
+      "codigo": "75011108664",
+      "nombre": "Atorvastatina MK",
+      "principio": "Atorvastatina 20mg",
+      "categoria": "Cardiovascular",
+      "caducidad": "2027-12-17",
+      "precioCompra": "32.00",
+      "precioVenta": "50.00",
+      "stock": 9,
+      "precio_compra": 32,
+      "precio_venta": 50
+    },
+    {
+      "id": "MED-016",
+      "codigo": "75011187855",
+      "nombre": "Bepanthen",
+      "principio": "Dexpantenol 5%",
+      "categoria": "Dermatológicos",
+      "caducidad": "2028-01-06",
+      "precioCompra": "42.00",
+      "precioVenta": "65.00",
+      "stock": 35,
+      "precio_compra": 42,
+      "precio_venta": 65
+    },
+    {
+      "id": "MED-017",
+      "codigo": "75011267046",
+      "nombre": "Glucophage",
+      "principio": "Metformina 850mg",
+      "categoria": "Diabetes",
+      "caducidad": "2027-11-27",
+      "precioCompra": "26.00",
+      "precioVenta": "40.00",
+      "stock": 70,
+      "precio_compra": 26,
+      "precio_venta": 40
+    },
+    {
+      "id": "MED-018",
+      "codigo": "75011346237",
+      "nombre": "Mucosolvan",
+      "principio": "Ambroxol 30mg",
+      "categoria": "Respiratorio",
+      "caducidad": "2026-11-24",
+      "precioCompra": "33.00",
+      "precioVenta": "49.00",
+      "stock": 14,
+      "precio_compra": 33,
+      "precio_venta": 49
+    },
+    {
+      "id": "MED-019",
+      "codigo": "75011425428",
+      "nombre": "Fucidin",
+      "principio": "Ácido fusídico 2%",
+      "categoria": "Dermatológicos",
+      "caducidad": "2027-07-30",
+      "precioCompra": "55.00",
+      "precioVenta": "82.00",
+      "stock": 3,
+      "precio_compra": 55,
+      "precio_venta": 82
+    },
+    {
+      "id": "MED-020",
+      "codigo": "75011504619",
+      "nombre": "Januvia",
+      "principio": "Sitagliptina 100mg",
+      "categoria": "Diabetes",
+      "caducidad": "2028-03-26",
+      "precioCompra": "210.00",
+      "precioVenta": "295.00",
+      "stock": 12,
+      "precio_compra": 210,
+      "precio_venta": 295
+    }
+  ],
+  "provs": [
+    {
+      "id": "PRV-001",
+      "empresa": "Droguería Centroamericana",
+      "contacto": "Luis Méndez",
+      "telefono": "2245-1100",
+      "correo": "ventas@drocen.gt",
+      "direccion": "Zona 9, Ciudad de Guatemala"
+    },
+    {
+      "id": "PRV-002",
+      "empresa": "Laboratorios Bonin",
+      "contacto": "Ana Castillo",
+      "telefono": "2380-4422",
+      "correo": "pedidos@bonin.gt",
+      "direccion": "Zona 12, Ciudad de Guatemala"
+    },
+    {
+      "id": "PRV-003",
+      "empresa": "Farmasa Distribuciones",
+      "contacto": "Carlos Rivera",
+      "telefono": "2421-7788",
+      "correo": "info@farmasa.com",
+      "direccion": "Mixco, Guatemala"
+    },
+    {
+      "id": "PRV-004",
+      "empresa": "MediPharma GT",
+      "contacto": "Sofía Herrera",
+      "telefono": "2290-3355",
+      "correo": "contacto@medipharma.gt",
+      "direccion": "Zona 10, Ciudad de Guatemala"
+    },
+    {
+      "id": "PRV-005",
+      "empresa": "Grupo Selecta Salud",
+      "contacto": "Jorge Pérez",
+      "telefono": "7765-0099",
+      "correo": "selecta@salud.gt",
+      "direccion": "Quetzaltenango"
+    }
+  ],
+  "clients": [
+    {
+      "id": "CLI-001",
+      "nombre": "Ana Morales",
+      "telefono": "5512-3344",
+      "nit": "4589632-1",
+      "puntos": 45
+    },
+    {
+      "id": "CLI-002",
+      "nombre": "Carlos Juárez",
+      "telefono": "5523-8899",
+      "nit": "CF",
+      "puntos": 10
+    },
+    {
+      "id": "CLI-003",
+      "nombre": "Lucía Barrios",
+      "telefono": "4456-7788",
+      "nit": "7845123-6",
+      "puntos": 120
+    },
+    {
+      "id": "CLI-004",
+      "nombre": "Pedro Gómez",
+      "telefono": "5590-1122",
+      "nit": "1234567-8",
+      "puntos": 0
+    },
+    {
+      "id": "CLI-005",
+      "nombre": "María Fernanda Ruiz",
+      "telefono": "3345-6677",
+      "nit": "9988776-5",
+      "puntos": 75
+    },
+    {
+      "id": "CLI-006",
+      "nombre": "José Ramírez",
+      "telefono": "5567-0011",
+      "nit": "CF",
+      "puntos": 20
+    },
+    {
+      "id": "CLI-007",
+      "nombre": "Elena Castillo",
+      "telefono": "4478-2233",
+      "nit": "5566778-9",
+      "puntos": 200
+    },
+    {
+      "id": "CLI-008",
+      "nombre": "Diego Hernández",
+      "telefono": "5501-9988",
+      "nit": "3322114-0",
+      "puntos": 35
+    },
+    {
+      "id": "CLI-009",
+      "nombre": "Sofía Pérez",
+      "telefono": "3390-4455",
+      "nit": "CF",
+      "puntos": 5
+    },
+    {
+      "id": "CLI-010",
+      "nombre": "Ricardo López",
+      "telefono": "5544-6677",
+      "nit": "6677889-1",
+      "puntos": 60
+    }
+  ],
+  "compras": [
+    {
+      "id": "uuid-compra-seed-1",
+      "codigo": "OC-1001",
+      "fecha": "2026-11-07T01:52:58.713Z",
+      "proveedorId": "PRV-001",
+      "medId": "MED-001",
+      "cantidad": 50,
+      "costo": 8.5,
+      "estado": "Completado",
+      "nota": "Entrega programada completada"
+    },
+    {
+      "id": "uuid-compra-seed-2",
+      "codigo": "OC-1002",
+      "fecha": "2026-11-10T01:52:58.713Z",
+      "proveedorId": "PRV-002",
+      "medId": "MED-002",
+      "cantidad": 30,
+      "costo": 12,
+      "estado": "Pendiente",
+      "nota": "Pedido de reposición mensual"
+    }
+  ],
+  "ventas": [
+    {
+      "id": "vta-seed-1",
+      "codigo": "VTA-1001",
+      "fecha": "2026-11-11T01:52:58.713Z",
+      "subtotal": 14,
+      "descuento": 0,
+      "descPct": 0,
+      "iva": 1.68,
+      "total": 15.68,
+      "vendedorNombre": "Admin General",
+      "vendedorId": "1",
+      "clienteId": "CLI-001",
+      "puntos": 0,
+      "items": [
+        {
+          "medId": "MED-001",
+          "nombre": "Panadol Extra",
+          "cantidad": 1,
+          "precio": 14
+        }
+      ]
+    },
+    {
+      "id": "vta-seed-2",
+      "codigo": "VTA-1002",
+      "fecha": "2026-11-09T01:52:58.713Z",
+      "subtotal": 39,
+      "descuento": 0,
+      "descPct": 0,
+      "iva": 4.68,
+      "total": 43.68,
+      "vendedorNombre": "María López",
+      "vendedorId": "2",
+      "clienteId": "CLI-002",
+      "puntos": 0,
+      "items": [
+        {
+          "medId": "MED-002",
+          "nombre": "Advil",
+          "cantidad": 2,
+          "precio": 19.5
+        }
+      ]
+    },
+    {
+      "id": "vta-seed-3",
+      "codigo": "VTA-1003",
+      "fecha": "2026-11-07T01:52:58.713Z",
+      "subtotal": 165,
+      "descuento": 0,
+      "descPct": 0,
+      "iva": 19.8,
+      "total": 184.8,
+      "vendedorNombre": "Admin General",
+      "vendedorId": "1",
+      "clienteId": "CLI-003",
+      "puntos": 5,
+      "items": [
+        {
+          "medId": "MED-003",
+          "nombre": "Amoxil",
+          "cantidad": 3,
+          "precio": 55
+        }
+      ]
+    },
+    {
+      "id": "vta-seed-4",
+      "codigo": "VTA-1004",
+      "fecha": "2026-11-05T01:52:58.713Z",
+      "subtotal": 34,
+      "descuento": 0,
+      "descPct": 0,
+      "iva": 4.08,
+      "total": 38.08,
+      "vendedorNombre": "María López",
+      "vendedorId": "2",
+      "clienteId": "CLI-004",
+      "puntos": 0,
+      "items": [
+        {
+          "medId": "MED-004",
+          "nombre": "Clarityne",
+          "cantidad": 1,
+          "precio": 34
+        }
+      ]
+    },
+    {
+      "id": "vta-seed-5",
+      "codigo": "VTA-1005",
+      "fecha": "2026-11-03T01:52:58.713Z",
+      "subtotal": 50,
+      "descuento": 0,
+      "descPct": 0,
+      "iva": 6,
+      "total": 56,
+      "vendedorNombre": "Admin General",
+      "vendedorId": "1",
+      "clienteId": "CLI-005",
+      "puntos": 0,
+      "items": [
+        {
+          "medId": "MED-005",
+          "nombre": "Omeprazol MK",
+          "cantidad": 2,
+          "precio": 25
+        }
+      ]
+    },
+    {
+      "id": "vta-seed-6",
+      "codigo": "VTA-1006",
+      "fecha": "2026-11-01T01:52:58.713Z",
+      "subtotal": 126,
+      "descuento": 0,
+      "descPct": 0,
+      "iva": 15.12,
+      "total": 141.12,
+      "vendedorNombre": "María López",
+      "vendedorId": "2",
+      "clienteId": "CLI-006",
+      "puntos": 5,
+      "items": [
+        {
+          "medId": "MED-006",
+          "nombre": "Losartán Denk",
+          "cantidad": 3,
+          "precio": 42
+        }
+      ]
+    },
+    {
+      "id": "vta-seed-7",
+      "codigo": "VTA-1007",
+      "fecha": "2026-10-30T01:52:58.713Z",
+      "subtotal": 139,
+      "descuento": 0,
+      "descPct": 0,
+      "iva": 16.68,
+      "total": 155.68,
+      "vendedorNombre": "Admin General",
+      "vendedorId": "1",
+      "clienteId": "CLI-007",
+      "puntos": 5,
+      "items": [
+        {
+          "medId": "MED-007",
+          "nombre": "Centrum",
+          "cantidad": 1,
+          "precio": 139
+        }
+      ]
+    },
+    {
+      "id": "vta-seed-8",
+      "codigo": "VTA-1008",
+      "fecha": "2026-10-28T01:52:58.713Z",
+      "subtotal": 144,
+      "descuento": 0,
+      "descPct": 0,
+      "iva": 17.28,
+      "total": 161.28,
+      "vendedorNombre": "María López",
+      "vendedorId": "2",
+      "clienteId": "CLI-008",
+      "puntos": 5,
+      "items": [
+        {
+          "medId": "MED-008",
+          "nombre": "Ventolin",
+          "cantidad": 2,
+          "precio": 72
+        }
+      ]
+    },
+    {
+      "id": "vta-seed-9",
+      "codigo": "VTA-1009",
+      "fecha": "2026-10-26T01:52:58.713Z",
+      "subtotal": 30,
+      "descuento": 0,
+      "descPct": 0,
+      "iva": 3.6,
+      "total": 33.6,
+      "vendedorNombre": "Admin General",
+      "vendedorId": "1",
+      "clienteId": "CLI-009",
+      "puntos": 0,
+      "items": [
+        {
+          "medId": "MED-009",
+          "nombre": "Aspirina Bayer",
+          "cantidad": 3,
+          "precio": 10
+        }
+      ]
+    },
+    {
+      "id": "vta-seed-10",
+      "codigo": "VTA-1010",
+      "fecha": "2026-10-24T01:52:58.713Z",
+      "subtotal": 62,
+      "descuento": 0,
+      "descPct": 0,
+      "iva": 7.44,
+      "total": 69.44,
+      "vendedorNombre": "María López",
+      "vendedorId": "2",
+      "clienteId": "CLI-010",
+      "puntos": 0,
+      "items": [
+        {
+          "medId": "MED-010",
+          "nombre": "Cipro",
+          "cantidad": 1,
+          "precio": 62
+        }
+      ]
+    },
+    {
+      "id": "vta-seed-11",
+      "codigo": "VTA-1011",
+      "fecha": "2026-10-22T01:52:58.713Z",
+      "subtotal": 58,
+      "descuento": 0,
+      "descPct": 0,
+      "iva": 6.96,
+      "total": 64.96,
+      "vendedorNombre": "Admin General",
+      "vendedorId": "1",
+      "clienteId": "CLI-001",
+      "puntos": 0,
+      "items": [
+        {
+          "medId": "MED-011",
+          "nombre": "Voltaren",
+          "cantidad": 2,
+          "precio": 29
+        }
+      ]
+    },
+    {
+      "id": "vta-seed-12",
+      "codigo": "VTA-1012",
+      "fecha": "2026-10-20T01:52:58.713Z",
+      "subtotal": 204,
+      "descuento": 0,
+      "descPct": 0,
+      "iva": 24.48,
+      "total": 228.48,
+      "vendedorNombre": "María López",
+      "vendedorId": "2",
+      "clienteId": "CLI-002",
+      "puntos": 10,
+      "items": [
+        {
+          "medId": "MED-012",
+          "nombre": "Allegra",
+          "cantidad": 3,
+          "precio": 68
+        }
+      ]
+    },
+    {
+      "id": "vta-seed-13",
+      "codigo": "VTA-1013",
+      "fecha": "2026-10-18T01:52:58.713Z",
+      "subtotal": 58,
+      "descuento": 0,
+      "descPct": 0,
+      "iva": 6.96,
+      "total": 64.96,
+      "vendedorNombre": "Admin General",
+      "vendedorId": "1",
+      "clienteId": "CLI-003",
+      "puntos": 0,
+      "items": [
+        {
+          "medId": "MED-013",
+          "nombre": "Gaviscon",
+          "cantidad": 1,
+          "precio": 58
+        }
+      ]
+    },
+    {
+      "id": "vta-seed-14",
+      "codigo": "VTA-1014",
+      "fecha": "2026-10-16T01:52:58.713Z",
+      "subtotal": 92,
+      "descuento": 0,
+      "descPct": 0,
+      "iva": 11.04,
+      "total": 103.04,
+      "vendedorNombre": "María López",
+      "vendedorId": "2",
+      "clienteId": "CLI-004",
+      "puntos": 5,
+      "items": [
+        {
+          "medId": "MED-014",
+          "nombre": "Redoxon",
+          "cantidad": 2,
+          "precio": 46
+        }
+      ]
+    },
+    {
+      "id": "vta-seed-15",
+      "codigo": "VTA-1015",
+      "fecha": "2026-10-14T01:52:58.713Z",
+      "subtotal": 150,
+      "descuento": 0,
+      "descPct": 0,
+      "iva": 18,
+      "total": 168,
+      "vendedorNombre": "Admin General",
+      "vendedorId": "1",
+      "clienteId": "CLI-005",
+      "puntos": 5,
+      "items": [
+        {
+          "medId": "MED-015",
+          "nombre": "Atorvastatina MK",
+          "cantidad": 3,
+          "precio": 50
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "email": "admin@farmacia.gt",
+      "password": "admin123",
+      "nombre": "Admin General",
+      "role": "admin"
+    },
+    {
+      "id": 2,
+      "email": "empleado@farmacia.gt",
+      "password": "empleado123",
+      "nombre": "María López",
+      "role": "empleado"
+    }
+  ]
+}

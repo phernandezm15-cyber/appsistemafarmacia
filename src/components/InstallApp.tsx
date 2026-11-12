@@ -33,7 +33,7 @@ export function InstallApp({ compact }: { compact?: boolean }) {
       setPct(Math.min(100, p));
       if (p >= 100) {
         clearInterval(t);
-        toast.success("FarmaciaDB instalada", { description: "Acceso directo creado en tu escritorio (simulado)" });
+        toast.success("FarmaciaDB instalada", { description: "Acceso directo añadido a tu pantalla de inicio" });
       }
     }, 220);
   };
