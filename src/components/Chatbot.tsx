@@ -12,6 +12,7 @@ import { useData } from "@/lib/db";
 import { toast } from "sonner";
 import { FormattedBotMessage } from "@/components/FormattedBotMessage";
 import { generateExpertPharmacyReply } from "@/lib/pharmacy-ai-engine";
+import { apiUrl } from "@/lib/api";
 
 interface Msg {
   from: "bot" | "user";
@@ -64,7 +65,7 @@ export function Chatbot() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/ai/chat", {
+      const response = await fetch(apiUrl("/api/ai/chat"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -292,7 +293,7 @@ export function Chatbot() {
           reader.readAsDataURL(blob);
           reader.onloadend = async () => {
             const base64Data = (reader.result as string).split(",")[1];
-            const res = await fetch("/api/ai/voice-transcribe", {
+            const res = await fetch(apiUrl("/api/ai/voice-transcribe"), {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ audioBase64: base64Data }),

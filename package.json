@@ -8,7 +8,10 @@
     "start": "node server.ts",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "android:init": "npx @capacitor/cli init FarmaciaDB gt.farmaciadb.app --web-dir dist && npx @capacitor/cli add android",
+    "android:sync": "npm run build && npx @capacitor/cli sync android",
+    "android:open": "npx @capacitor/cli open android"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

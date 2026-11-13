@@ -4,6 +4,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { apiUrl } from '@/lib/api';
 import type { Database } from './types';
 
 const hasRealSupabase = Boolean(
@@ -129,7 +130,7 @@ class CloudSQLDatabaseClient {
       },
       signInWithPassword: async ({ email, password }: { email: string; password?: string }) => {
         try {
-          const res = await fetch('/api/auth/login', {
+          const res = await fetch(apiUrl('/api/auth/login'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: email.trim(), password }),
@@ -177,7 +178,7 @@ class CloudSQLDatabaseClient {
       },
       signUp: async ({ email, password, options }: any) => {
         try {
-          const res = await fetch('/api/auth/register', {
+          const res = await fetch(apiUrl('/api/auth/register'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -254,42 +255,42 @@ class CloudSQLDatabaseClient {
   private async fetchTableData(tableName: string): Promise<any[]> {
     try {
       if (tableName === 'medicamentos') {
-        const res = await fetch('/api/medicamentos', { headers: getAuthHeader() });
+        const res = await fetch(apiUrl('/api/medicamentos'), { headers: getAuthHeader() });
         if (res.ok) {
           const list = await res.json();
           setStore('meds', list);
           return list;
         }
       } else if (tableName === 'clientes') {
-        const res = await fetch('/api/clientes', { headers: getAuthHeader() });
+        const res = await fetch(apiUrl('/api/clientes'), { headers: getAuthHeader() });
         if (res.ok) {
           const list = await res.json();
           setStore('clients', list);
           return list;
         }
       } else if (tableName === 'proveedores') {
-        const res = await fetch('/api/proveedores', { headers: getAuthHeader() });
+        const res = await fetch(apiUrl('/api/proveedores'), { headers: getAuthHeader() });
         if (res.ok) {
           const list = await res.json();
           setStore('provs', list);
           return list;
         }
       } else if (tableName === 'compras') {
-        const res = await fetch('/api/compras', { headers: getAuthHeader() });
+        const res = await fetch(apiUrl('/api/compras'), { headers: getAuthHeader() });
         if (res.ok) {
           const list = await res.json();
           setStore('compras', list);
           return list;
         }
       } else if (tableName === 'ventas') {
-        const res = await fetch('/api/ventas', { headers: getAuthHeader() });
+        const res = await fetch(apiUrl('/api/ventas'), { headers: getAuthHeader() });
         if (res.ok) {
           const list = await res.json();
           setStore('ventas', list);
           return list;
         }
       } else if (tableName === 'profiles') {
-        const res = await fetch('/api/auth/users', { headers: getAuthHeader() });
+        const res = await fetch(apiUrl('/api/auth/users'), { headers: getAuthHeader() });
         if (res.ok) {
           const list = await res.json();
           return list.map((u: any) => ({
@@ -301,7 +302,7 @@ class CloudSQLDatabaseClient {
           }));
         }
       } else if (tableName === 'user_roles') {
-        const res = await fetch('/api/auth/users', { headers: getAuthHeader() });
+        const res = await fetch(apiUrl('/api/auth/users'), { headers: getAuthHeader() });
         if (res.ok) {
           const list = await res.json();
           return list.map((u: any) => ({
@@ -384,7 +385,7 @@ class CloudSQLDatabaseClient {
         for (const row of rows) {
           try {
             if (tableName === 'medicamentos') {
-              const res = await fetch('/api/medicamentos', {
+              const res = await fetch(apiUrl('/api/medicamentos'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
                 body: JSON.stringify(row),
@@ -395,7 +396,7 @@ class CloudSQLDatabaseClient {
                 continue;
               }
             } else if (tableName === 'clientes') {
-              const res = await fetch('/api/clientes', {
+              const res = await fetch(apiUrl('/api/clientes'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
                 body: JSON.stringify(row),
@@ -406,7 +407,7 @@ class CloudSQLDatabaseClient {
                 continue;
               }
             } else if (tableName === 'proveedores') {
-              const res = await fetch('/api/proveedores', {
+              const res = await fetch(apiUrl('/api/proveedores'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
                 body: JSON.stringify(row),
@@ -417,7 +418,7 @@ class CloudSQLDatabaseClient {
                 continue;
               }
             } else if (tableName === 'compras') {
-              const res = await fetch('/api/compras', {
+              const res = await fetch(apiUrl('/api/compras'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
                 body: JSON.stringify(row),
@@ -449,25 +450,25 @@ class CloudSQLDatabaseClient {
           eq: async (col: string, val: any) => {
             try {
               if (tableName === 'medicamentos') {
-                await fetch('/api/medicamentos', {
+                await fetch(apiUrl('/api/medicamentos'), {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
                   body: JSON.stringify({ ...fields, [col]: val }),
                 });
               } else if (tableName === 'clientes') {
-                await fetch('/api/clientes', {
+                await fetch(apiUrl('/api/clientes'), {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
                   body: JSON.stringify({ ...fields, [col]: val }),
                 });
               } else if (tableName === 'proveedores') {
-                await fetch('/api/proveedores', {
+                await fetch(apiUrl('/api/proveedores'), {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
                   body: JSON.stringify({ ...fields, [col]: val }),
                 });
               } else if (tableName === 'compras' && fields.estado) {
-                await fetch(`/api/compras/${val}/estado`, {
+                await fetch(apiUrl(`/api/compras/${val}/estado`), {
                   method: 'PATCH',
                   headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
                   body: JSON.stringify({ estado: fields.estado }),
@@ -496,11 +497,11 @@ class CloudSQLDatabaseClient {
             const executeDelete = async () => {
               try {
                 if (tableName === 'medicamentos') {
-                  await fetch(`/api/medicamentos/${val}`, { method: 'DELETE', headers: getAuthHeader() });
+                  await fetch(apiUrl(`/api/medicamentos/${val}`), { method: 'DELETE', headers: getAuthHeader() });
                 } else if (tableName === 'proveedores') {
-                  await fetch(`/api/proveedores/${val}`, { method: 'DELETE', headers: getAuthHeader() });
+                  await fetch(apiUrl(`/api/proveedores/${val}`), { method: 'DELETE', headers: getAuthHeader() });
                 } else if (tableName === 'users' || tableName === 'profiles') {
-                  await fetch(`/api/auth/users/${val}`, { method: 'DELETE', headers: getAuthHeader() });
+                  await fetch(apiUrl(`/api/auth/users/${val}`), { method: 'DELETE', headers: getAuthHeader() });
                 }
               } catch (e) {
                 console.warn(`[Delete backend error on ${tableName}]:`, e);
@@ -581,7 +582,7 @@ class CloudSQLDatabaseClient {
       };
 
       try {
-        const res = await fetch('/api/ventas', {
+        const res = await fetch(apiUrl('/api/ventas'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
           body: JSON.stringify(ventaPayload),
@@ -656,7 +657,7 @@ class CloudSQLDatabaseClient {
     if (funcName === 'recibir_compra') {
       const { _id } = args;
       try {
-        const res = await fetch(`/api/compras/${_id}/estado`, {
+        const res = await fetch(apiUrl(`/api/compras/${_id}/estado`), {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
           body: JSON.stringify({ estado: 'Completado' }),

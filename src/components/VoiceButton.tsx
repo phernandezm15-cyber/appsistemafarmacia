@@ -21,6 +21,7 @@ import {
   resolvePharmaceuticalVoiceQuery,
   type VoiceMatchResult,
 } from "@/lib/pharmacy-voice-matcher";
+import { apiUrl } from "@/lib/api";
 import type { Medicamento } from "@/lib/store";
 
 interface VoiceButtonProps {
@@ -392,7 +393,7 @@ export function VoiceButton({ onText, className, meds: propMeds }: VoiceButtonPr
                 return;
               }
 
-              const res = await fetch("/api/ai/voice-transcribe", {
+              const res = await fetch(apiUrl("/api/ai/voice-transcribe"), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

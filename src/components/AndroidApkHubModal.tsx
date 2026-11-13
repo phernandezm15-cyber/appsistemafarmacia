@@ -1,18 +1,19 @@
 import { useEffect, useState } from "react";
-import { 
-  Smartphone, 
-  Download, 
-  QrCode, 
-  CheckCircle2, 
-  Copy, 
-  Check, 
-  Terminal, 
-  ShieldCheck, 
-  ExternalLink,
+import {
+  Smartphone,
+  Download,
+  QrCode,
+  CheckCircle2,
+  Copy,
+  Check,
+  Terminal,
+  ShieldCheck,
   Layers,
-  Sparkles,
   RefreshCw,
-  FolderArchive
+  FolderArchive,
+  Package,
+  GitBranch,
+  Cpu,
 } from "lucide-react";
 import { toast } from "sonner";
 import QRCode from "qrcode";
@@ -22,62 +23,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-type BIP = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
-
 export function AndroidApkHubModal({ trigger }: { trigger?: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  const [deferred, setDeferred] = useState<BIP | null>(null);
-  const [isStandalone, setIsStandalone] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [copied, setCopied] = useState(false);
+  const [copiedCmd, setCopiedCmd] = useState(false);
   const [downloadingZip, setDownloadingZip] = useState(false);
   const [appUrl, setAppUrl] = useState("");
 
   useEffect(() => {
-    // Detect standalone PWA mode
-    const standalone = window.matchMedia("(display-mode: standalone)").matches || 
-      (window.navigator as any).standalone === true;
-    setIsStandalone(standalone);
-
-    // Listen for install prompt
-    const h = (e: Event) => {
-      e.preventDefault();
-      setDeferred(e as BIP);
-    };
-    window.addEventListener("beforeinstallprompt", h);
-
-    // Get current URL
     const currentUrl = window.location.origin;
     setAppUrl(currentUrl);
 
-    // Generate QR code for mobile testing
     QRCode.toDataURL(currentUrl, {
-      width: 280,
+      width: 260,
       margin: 2,
       color: {
         dark: "#0f172a",
         light: "#ffffff",
       },
-    }).then(setQrDataUrl).catch((err) => console.error("QR Code Error:", err));
-
-    return () => window.removeEventListener("beforeinstallprompt", h);
+    })
+      .then(setQrDataUrl)
+      .catch((err) => console.error("QR Code Error:", err));
   }, []);
-
-  const handleInstallPWA = async () => {
-    if (deferred) {
-      await deferred.prompt();
-      const choice = await deferred.userChoice;
-      if (choice.outcome === "accepted") {
-        toast.success("¡FarmaciaDB instalada exitosamente en Android!");
-        setIsStandalone(true);
-      }
-      setDeferred(null);
-    } else {
-      toast.info("Para instalar en Android:", {
-        description: "Abre el menú de Chrome (3 puntos) y selecciona 'Instalar aplicación' o 'Agregar a la pantalla principal'.",
-      });
-    }
-  };
 
   const copyUrl = () => {
     navigator.clipboard.writeText(appUrl);
@@ -86,20 +54,33 @@ export function AndroidApkHubModal({ trigger }: { trigger?: React.ReactNode }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const studioCommands = `npm install
+npm install @capacitor/core @capacitor/android @capacitor/cli
+npm run build
+npx cap add android
+npx cap sync android
+npx cap open android`;
+
+  const copyStudioCommands = () => {
+    navigator.clipboard.writeText(studioCommands);
+    setCopiedCmd(true);
+    toast.success("Comandos copiados");
+    setTimeout(() => setCopiedCmd(false), 2000);
+  };
+
   const downloadAndroidProjectZip = async () => {
     setDownloadingZip(true);
     try {
       const zip = new JSZip();
 
-      // Android Manifest
       const manifestXml = `<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="gt.farmaciadb.app">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
@@ -108,14 +89,14 @@ export function AndroidApkHubModal({ trigger }: { trigger?: React.ReactNode }) {
         android:label="FarmaciaDB"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.FarmaciaDB"
+        android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
             android:launchMode="singleTask"
-            android:theme="@style/Theme.FarmaciaDB.NoActionBarLaunch">
+            android:theme="@style/AppTheme.NoActionBarLaunch">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -124,14 +105,14 @@ export function AndroidApkHubModal({ trigger }: { trigger?: React.ReactNode }) {
     </application>
 </manifest>`;
 
-      // capacitor.config.json
+      // Standalone Capacitor config: bundles compiled app locally inside the APK (no remote website wrapper!)
       const capacitorConfig = {
         appId: "gt.farmaciadb.app",
         appName: "FarmaciaDB",
         webDir: "dist",
         bundledWebRuntime: false,
         server: {
-          url: appUrl,
+          androidScheme: "https",
           cleartext: true,
         },
         android: {
@@ -141,105 +122,101 @@ export function AndroidApkHubModal({ trigger }: { trigger?: React.ReactNode }) {
         },
       };
 
-      // MainActivity.java
+      // Native MainActivity with runtime Microphone & Camera permission bridge for Android APK
       const mainActivityJava = `package gt.farmaciadb.app;
 
-import com.getcapacitor.BridgeActivity;
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.webkit.PermissionRequest;
+import android.webkit.WebChromeClient;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import com.getcapacitor.BridgeActivity;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends BridgeActivity {
+    private static final int PERM_REQUEST_CODE = 1001;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestRuntimePermissions();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        if (getBridge() != null && getBridge().getWebView() != null) {
+            getBridge().getWebView().setWebChromeClient(new WebChromeClient() {
+                @Override
+                public void onPermissionRequest(final PermissionRequest request) {
+                    runOnUiThread(() -> request.grant(request.getResources()));
+                }
+            });
+        }
+    }
+
+    private void requestRuntimePermissions() {
+        String[] needed = new String[] {
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.CAMERA
+        };
+        List<String> toRequest = new ArrayList<>();
+        for (String p : needed) {
+            if (ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED) {
+                toRequest.add(p);
+            }
+        }
+        if (!toRequest.isEmpty()) {
+            ActivityCompat.requestPermissions(this, toRequest.toArray(new String[0]), PERM_REQUEST_CODE);
+        }
     }
 }`;
 
-      // build.gradle (app)
-      const buildGradle = `apply plugin: 'com.android.application'
+      const readmeMd = `# FarmaciaDB - Compilar APK Android Nativo (Standalone)
 
-android {
-    namespace "gt.farmaciadb.app"
-    compileSdkVersion 34
-    defaultConfig {
-        applicationId "gt.farmaciadb.app"
-        minSdkVersion 24
-        targetSdkVersion 34
-        versionCode 1
-        versionName "1.0.0"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-    }
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-        debug {
-            applicationIdSuffix ".debug"
-            debuggable true
-        }
-    }
-}
+Esta configuración empaqueta toda la aplicación dentro del archivo **.apk** (sin depender de Chrome ni abrir un sitio web).
 
-dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation project(':capacitor-android')
-}`;
+## Cómo generar el APK real en tu computadora con Android Studio:
+1. Abre una terminal en la carpeta raíz de tu proyecto (clonado de GitHub).
+2. Copia estos archivos dentro de la raíz (si aún no los tienes) y ejecuta:
+   \`\`\`bash
+   npm install
+   npm install @capacitor/core @capacitor/android @capacitor/cli
+   npm run build
+   npx cap add android
+   npx cap sync android
+   npx cap open android
+   \`\`\`
+3. En **Android Studio**, espera que termine Gradle Sync y haz clic en:
+   **Build > Build Bundle(s) / APK(s) > Build APK(s)**
+4. Tu instalador real estará en:
+   \`android/app/build/outputs/apk/debug/app-debug.apk\`
 
-      // README instructions
-      const readmeMd = `# FarmaciaDB Móvil - Generación de APK Android
-
-Este paquete contiene la configuración completa y el proyecto base para compilar la aplicación **FarmaciaDB** en un archivo **.apk** instalable en cualquier dispositivo Android.
-
-## Opción 1: Compilar APK con Android Studio (Recomendado)
-1. Descomprime este archivo .zip.
-2. Abre **Android Studio**.
-3. Selecciona **Open** y abre la carpeta descomprimida.
-4. Espera a que Gradle sincronice las dependencias.
-5. Ve al menú superior: **Build > Build Bundle(s) / APK(s) > Build APK(s)**.
-6. Android Studio generará tu archivo **app-debug.apk** listo para instalar en tu celular.
-
-## Opción 2: Generar APK en 1 comando con Bubblewrap (TWA Oficial de Google)
-Bubblewrap convierte directamente la PWA en un APK nativo firmado:
-\`\`\`bash
-# 1. Instalar la herramienta oficial de Google
-npm install -g @bubblewrap/cli
-
-# 2. Inicializar el proyecto con la URL de FarmaciaDB
-bubblewrap init --manifest="${appUrl}/manifest.json"
-
-# 3. Compilar el APK
-bubblewrap build
-\`\`\`
-El comando generará el archivo \`app-release-signed.apk\` listo para instalar o subir a Google Play Store.
-
-## Opción 3: Compilar con Capacitor CLI
-\`\`\`bash
-npm install -g @capacitor/cli @capacitor/core @capacitor/android
-npx cap add android
-npx cap copy
-npx cap open android
-\`\`\`
+## Cómo generar el APK automático desde GitHub (Sin instalar Android Studio):
+El repositorio ya incluye \`.github/workflows/build-apk.yml\`.
+Cada vez que hagas push a \`main\`, ve en GitHub a la pestaña **Actions > Compilar FarmaciaDB Android APK** y descarga el archivo **FarmaciaDB-Android-APK**.
 `;
 
       zip.file("capacitor.config.json", JSON.stringify(capacitorConfig, null, 2));
-      zip.file("README-COMO-COMPILAR-APK.md", readmeMd);
-      zip.file("android/app/src/main/AndroidManifest.xml", manifestXml);
-      zip.file("android/app/src/main/java/gt/farmaciadb/app/MainActivity.java", mainActivityJava);
-      zip.file("android/app/build.gradle", buildGradle);
+      zip.file("README-COMPILAR-APK-NATIVO.md", readmeMd);
+      zip.file("android-overrides/AndroidManifest.xml", manifestXml);
+      zip.file("android-overrides/MainActivity.java", mainActivityJava);
 
       const blob = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "FarmaciaDB-Android-APK-Project.zip";
+      a.download = "FarmaciaDB-Native-APK-Config.zip";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast.success("Proyecto Android descargado con éxito", {
-        description: "Contiene AndroidManifest.xml, Gradle y la guía completa para compilar tu APK.",
+      toast.success("Paquete nativo Android descargado", {
+        description: "Incluye capacitor.config.json (empaquetado local), MainActivity.java con permisos de micrófono/cámara y guía.",
       });
     } catch (e: any) {
       console.error("Error creating zip:", e);
@@ -255,13 +232,13 @@ npx cap open android
         {trigger ? (
           trigger
         ) : (
-          <Button 
-            variant="hero" 
-            size="sm" 
+          <Button
+            variant="hero"
+            size="sm"
             className="glow gap-2 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-bold shadow-lg shadow-emerald-500/20"
           >
-            <Smartphone className="h-4 w-4" />
-            <span>App Android / APK</span>
+            <Package className="h-4 w-4" />
+            <span>Compilar APK Android</span>
           </Button>
         )}
       </DialogTrigger>
@@ -270,53 +247,181 @@ npx cap open android
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-600 text-white shadow-md">
-              <Smartphone className="h-6 w-6" />
+              <Package className="h-6 w-6" />
             </div>
             <div>
-              <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                Centro de App Android & APK
+              <DialogTitle className="text-xl font-bold flex items-center gap-2 flex-wrap">
+                Generador de APK Nativo Android
                 <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-400 font-medium text-xs">
-                  Android 14+ / PWA Ready
+                  APK Standalone Real
                 </Badge>
               </DialogTitle>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Prueba en tu móvil, instala la aplicación nativa o genera el archivo APK compilable.
+                Empaqueta la app completa dentro de un archivo .apk instalable (sin abrir navegador ni depender de acceso web).
               </p>
             </div>
           </div>
         </DialogHeader>
 
-        <Tabs defaultValue="qr" className="mt-4">
+        <Tabs defaultValue="github" className="mt-4">
           <TabsList className="grid grid-cols-3 bg-muted/60 p-1 rounded-2xl">
+            <TabsTrigger value="github" className="rounded-xl text-xs font-semibold gap-1.5">
+              <GitBranch className="h-3.5 w-3.5" />
+              <span>APK en GitHub</span>
+            </TabsTrigger>
+            <TabsTrigger value="studio" className="rounded-xl text-xs font-semibold gap-1.5">
+              <FolderArchive className="h-3.5 w-3.5" />
+              <span>Android Studio</span>
+            </TabsTrigger>
             <TabsTrigger value="qr" className="rounded-xl text-xs font-semibold gap-1.5">
               <QrCode className="h-3.5 w-3.5" />
-              <span>Probar en Celular</span>
-            </TabsTrigger>
-            <TabsTrigger value="install" className="rounded-xl text-xs font-semibold gap-1.5">
-              <Download className="h-3.5 w-3.5" />
-              <span>Instalar WebAPK</span>
-            </TabsTrigger>
-            <TabsTrigger value="project" className="rounded-xl text-xs font-semibold gap-1.5">
-              <FolderArchive className="h-3.5 w-3.5" />
-              <span>Generar APK</span>
+              <span>Vista Previa QR</span>
             </TabsTrigger>
           </TabsList>
 
-          {/* TAB 1: QR & Live Mobile Test */}
+          {/* TAB 1: Automatic GitHub Actions APK Build */}
+          <TabsContent value="github" className="space-y-4 pt-3">
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-5 space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
+                    <Cpu className="h-4 w-4 text-emerald-400" />
+                    Compilación automática de FarmaciaDB.apk en GitHub
+                  </h4>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Como ya tienes el proyecto en GitHub, agregamos el flujo automático{" "}
+                    <code className="text-emerald-400 font-mono">.github/workflows/build-apk.yml</code> que compila el APK real con Java 17 y Android SDK en la nube sin instalar nada en tu PC.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2 text-xs">
+                <div className="flex items-start gap-2.5 p-3 rounded-xl bg-background/60 border border-border/60">
+                  <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-500 text-white font-bold text-[11px]">
+                    1
+                  </span>
+                  <div>
+                    <p className="font-semibold text-foreground">Sube estos archivos actualizados a tu repositorio de GitHub</p>
+                    <p className="text-muted-foreground">
+                      Incluye <code className="text-primary">.github/workflows/build-apk.yml</code> y{" "}
+                      <code className="text-primary">capacitor.config.json</code> (ya configurados para app nativa offline).
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2.5 p-3 rounded-xl bg-background/60 border border-border/60">
+                  <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-500 text-white font-bold text-[11px]">
+                    2
+                  </span>
+                  <div>
+                    <p className="font-semibold text-foreground">Abre la pestaña "Actions" en tu GitHub</p>
+                    <p className="text-muted-foreground">
+                      Entra a <strong>Compilar FarmaciaDB Android APK</strong> (se ejecuta automático al hacer push o al pulsar <em>Run workflow</em>).
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2.5 p-3 rounded-xl bg-background/60 border border-border/60">
+                  <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-500 text-white font-bold text-[11px]">
+                    3
+                  </span>
+                  <div>
+                    <p className="font-semibold text-foreground">Descarga tu archivo ejecutable FarmaciaDB.apk</p>
+                    <p className="text-muted-foreground">
+                      En la sección <strong>Artifacts</strong> baja <code className="text-emerald-400">FarmaciaDB-Android-APK</code>, descomprime el <code className="text-emerald-400">FarmaciaDB.apk</code> y envíalo por WhatsApp o USB a cualquier teléfono Android.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-muted/40 border border-border/60 text-xs flex items-center gap-2 text-muted-foreground">
+                <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0" />
+                <span>
+                  El APK generado empaqueta el código completo dentro de la app con permisos nativos de micrófono (búsqueda por voz) y cámara (escáner de códigos).
+                </span>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* TAB 2: Android Studio Native APK */}
+          <TabsContent value="studio" className="space-y-4 pt-3">
+            <div className="rounded-2xl border border-border/80 bg-card/60 p-5 space-y-4">
+              <div>
+                <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-cyan-500" />
+                  Compilar archivo .apk en tu PC con Android Studio
+                </h4>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Usa Capacitor para empaquetar los archivos compilados (<code className="text-primary">dist/</code>) dentro de un proyecto nativo Java/Gradle y generar tu <code className="text-emerald-400">app-debug.apk</code>.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-muted/40 border border-border/80 text-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 font-mono text-[11px] text-primary">
+                    <Terminal className="h-3.5 w-3.5" />
+                    <span>Ejecuta en la carpeta de tu repositorio:</span>
+                  </div>
+                  <Button size="sm" variant="ghost" onClick={copyStudioCommands} className="h-7 text-[11px] gap-1">
+                    {copiedCmd ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+                    <span>{copiedCmd ? "Copiado" : "Copiar"}</span>
+                  </Button>
+                </div>
+                <pre className="p-3 rounded-xl bg-slate-950 text-slate-200 font-mono text-[11px] overflow-x-auto leading-relaxed">
+                  {studioCommands}
+                </pre>
+                <p className="text-muted-foreground text-[11px]">
+                  Luego en Android Studio haz clic en <strong>Build &gt; Build Bundle(s) / APK(s) &gt; Build APK(s)</strong> para obtener{" "}
+                  <code className="text-emerald-400">android/app/build/outputs/apk/debug/app-debug.apk</code>.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5 p-2.5 rounded-xl bg-muted/30 border border-border/50">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                  <span>App embebida 100% en el APK (sin URL web)</span>
+                </div>
+                <div className="flex items-center gap-1.5 p-2.5 rounded-xl bg-muted/30 border border-border/50">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                  <span>Permisos nativos de Voz y Cámara en MainActivity</span>
+                </div>
+              </div>
+
+              <Button
+                onClick={downloadAndroidProjectZip}
+                disabled={downloadingZip}
+                className="w-full gap-2 bg-primary hover:bg-primary/90 font-bold py-5 text-sm"
+              >
+                {downloadingZip ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <span>Empaquetando configuración nativa...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" />
+                    <span>Descargar Config Nativa Android & Guía (.zip)</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </TabsContent>
+
+          {/* TAB 3: Quick QR Preview for Testing */}
           <TabsContent value="qr" className="space-y-4 pt-3">
             <div className="rounded-2xl border border-border/80 bg-card/60 p-5 text-center">
               <p className="text-xs font-bold uppercase tracking-wider text-primary mb-1">
-                Escanea con la cámara de tu teléfono Android
+                Prueba rápida en teléfono antes de compilar el APK
               </p>
               <p className="text-xs text-muted-foreground max-w-md mx-auto mb-4">
-                Abre la cámara de tu smartphone o Google Lens para abrir la aplicación directamente en tu dispositivo con todas las funciones táctiles.
+                Escanea este código con tu teléfono Android para verificar botones, búsqueda por voz y diseño táctil en vivo antes de generar el instalador .apk.
               </p>
 
               <div className="inline-block p-3.5 rounded-2xl bg-white shadow-xl border border-slate-200">
                 {qrDataUrl ? (
-                  <img src={qrDataUrl} alt="QR Code Android" className="w-52 h-52 mx-auto rounded-lg" />
+                  <img src={qrDataUrl} alt="QR Code Android" className="w-48 h-48 mx-auto rounded-lg" />
                 ) : (
-                  <div className="w-52 h-52 grid place-items-center text-muted-foreground">
+                  <div className="w-48 h-48 grid place-items-center text-muted-foreground">
                     <RefreshCw className="h-6 w-6 animate-spin" />
                   </div>
                 )}
@@ -331,141 +436,6 @@ npx cap open android
                 <Button size="sm" variant="outline" onClick={copyUrl} className="shrink-0 gap-1.5">
                   {copied ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Copy className="h-3.5 w-3.5" />}
                   <span>{copied ? "Copiado" : "Copiar"}</span>
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="p-3.5 rounded-2xl border border-border/60 bg-muted/30 text-xs space-y-1">
-                <span className="font-bold text-foreground flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5 text-emerald-500" /> 1. Escanear
-                </span>
-                <p className="text-muted-foreground">Apunta tu cámara al código QR y toca el enlace sugerido en Chrome.</p>
-              </div>
-              <div className="p-3.5 rounded-2xl border border-border/60 bg-muted/30 text-xs space-y-1">
-                <span className="font-bold text-foreground flex items-center gap-1.5">
-                  <Download className="h-3.5 w-3.5 text-cyan-500" /> 2. Instalar
-                </span>
-                <p className="text-muted-foreground">En el aviso inferior o menú (⋮), pulsa "Instalar aplicación".</p>
-              </div>
-              <div className="p-3.5 rounded-2xl border border-border/60 bg-muted/30 text-xs space-y-1">
-                <span className="font-bold text-foreground flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> 3. Listo
-                </span>
-                <p className="text-muted-foreground">Se creará el ícono en tu pantalla de inicio funcionando como app nativa.</p>
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* TAB 2: PWA WebAPK Direct Install */}
-          <TabsContent value="install" className="space-y-4 pt-3">
-            <div className="rounded-2xl border border-border/80 bg-card/60 p-5 space-y-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                    Estado de Instalación Android (WebAPK)
-                  </h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Cumple al 100% los estándares de Progressive Web App de Google Play y Android.
-                  </p>
-                </div>
-                {isStandalone ? (
-                  <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
-                    Instalada
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="text-muted-foreground">
-                    Modo Navegador
-                  </Badge>
-                )}
-              </div>
-
-              <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 text-xs space-y-2">
-                <p className="font-semibold text-emerald-400">Ventajas de la App en Android:</p>
-                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-muted-foreground">
-                  <li className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                    Ejecución a pantalla completa sin barra de navegación
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                    Acceso táctil optimizado para cajeros y POS
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                    Cámara para escaneo de códigos de barra
-                  </li>
-                  <li className="flex items-center gap-1.5">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                    Micrófono para búsqueda clínica por voz
-                  </li>
-                </ul>
-              </div>
-
-              <div className="pt-2 flex flex-col sm:flex-row gap-3">
-                <Button 
-                  onClick={handleInstallPWA} 
-                  className="flex-1 gap-2 bg-gradient-to-r from-emerald-600 to-cyan-600 font-bold"
-                >
-                  <Download className="h-4 w-4" />
-                  <span>{deferred ? "Instalar en este Dispositivo" : "Ver Instrucciones de Instalación"}</span>
-                </Button>
-                <Button variant="outline" asChild className="gap-2">
-                  <a href="/manifest.json" target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4" />
-                    <span>Ver Manifest Android</span>
-                  </a>
-                </Button>
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* TAB 3: APK Project Zip & Compilation Guide */}
-          <TabsContent value="project" className="space-y-4 pt-3">
-            <div className="rounded-2xl border border-border/80 bg-card/60 p-5 space-y-4">
-              <div>
-                <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-cyan-500" />
-                  Descargar Paquete Android Studio / Capacitor
-                </h4>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Genera un archivo .zip completo con AndroidManifest.xml, Gradle, Capacitor y el código listo para compilar un archivo .apk independiente.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-muted/40 border border-border/80 text-xs space-y-2">
-                <div className="flex items-center gap-2 font-mono text-[11px] text-primary">
-                  <Terminal className="h-3.5 w-3.5" />
-                  <span>Método 1: Crear APK con Bubblewrap (Oficial de Google):</span>
-                </div>
-                <pre className="p-2.5 rounded-xl bg-slate-950 text-slate-300 font-mono text-[11px] overflow-x-auto">
-{`npm i -g @bubblewrap/cli
-bubblewrap init --manifest="${appUrl}/manifest.json"
-bubblewrap build`}
-                </pre>
-                <p className="text-muted-foreground text-[11px]">
-                  Generará automáticamente <code className="text-emerald-400">app-release-signed.apk</code> listo para instalar en cualquier teléfono.
-                </p>
-              </div>
-
-              <div className="pt-2">
-                <Button 
-                  onClick={downloadAndroidProjectZip} 
-                  disabled={downloadingZip}
-                  className="w-full gap-2 bg-primary hover:bg-primary/90 font-bold py-5 text-sm"
-                >
-                  {downloadingZip ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                      <span>Empaquetando archivos del proyecto...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-4 w-4" />
-                      <span>Descargar Proyecto Android & Guía (.zip)</span>
-                    </>
-                  )}
                 </Button>
               </div>
             </div>

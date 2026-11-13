@@ -1,0 +1,139 @@
+name: Compilar FarmaciaDB Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-android-apk:
+    name: Generar FarmaciaDB.apk Nativo
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Configurar Java JDK 17 (Requerido por Android Gradle)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Configurar Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Instalar dependencias y Capacitor Android
+        run: |
+          npm install --legacy-peer-deps
+          npm install @capacitor/core @capacitor/android @capacitor/cli --no-save --legacy-peer-deps
+
+      - name: Compilar aplicación React (dist/)
+        run: npm run build
+
+      - name: Generar proyecto nativo Android con Capacitor
+        run: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+          npx cap sync android
+
+      - name: Configurar permisos nativos de Micrófono, Cámara e Internet en AndroidManifest.xml
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          node -e '
+            const fs = require("fs");
+            let xml = fs.readFileSync("'"$MANIFEST"'", "utf8");
+            const perms = [
+              "<uses-permission android:name=\"android.permission.INTERNET\" />",
+              "<uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\" />",
+              "<uses-permission android:name=\"android.permission.RECORD_AUDIO\" />",
+              "<uses-permission android:name=\"android.permission.MODIFY_AUDIO_SETTINGS\" />",
+              "<uses-permission android:name=\"android.permission.CAMERA\" />",
+              "<uses-permission android:name=\"android.permission.VIBRATE\" />"
+            ];
+            for (const p of perms) {
+              if (!xml.includes(p)) {
+                xml = xml.replace("<application", "    " + p + "\n    <application");
+              }
+            }
+            if (!xml.includes("android:usesCleartextTraffic")) {
+              xml = xml.replace("<application", "<application android:usesCleartextTraffic=\"true\"");
+            }
+            fs.writeFileSync("'"$MANIFEST"'", xml);
+          '
+
+      - name: Configurar MainActivity.java para permisos nativos de Voz y Cámara
+        run: |
+          cat << 'EOF' > android/app/src/main/java/gt/farmaciadb/app/MainActivity.java
+          package gt.farmaciadb.app;
+
+          import android.Manifest;
+          import android.content.pm.PackageManager;
+          import android.os.Bundle;
+          import android.webkit.PermissionRequest;
+          import android.webkit.WebChromeClient;
+          import androidx.core.app.ActivityCompat;
+          import androidx.core.content.ContextCompat;
+          import com.getcapacitor.BridgeActivity;
+          import java.util.ArrayList;
+          import java.util.List;
+
+          public class MainActivity extends BridgeActivity {
+              private static final int PERM_REQUEST_CODE = 1001;
+
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  requestRuntimePermissions();
+              }
+
+              @Override
+              public void onStart() {
+                  super.onStart();
+                  if (getBridge() != null && getBridge().getWebView() != null) {
+                      getBridge().getWebView().setWebChromeClient(new WebChromeClient() {
+                          @Override
+                          public void onPermissionRequest(final PermissionRequest request) {
+                              runOnUiThread(() -> request.grant(request.getResources()));
+                          }
+                      });
+                  }
+              }
+
+              private void requestRuntimePermissions() {
+                  String[] needed = new String[] {
+                      Manifest.permission.RECORD_AUDIO,
+                      Manifest.permission.CAMERA
+                  };
+                  List<String> toRequest = new ArrayList<>();
+                  for (String p : needed) {
+                      if (ContextCompat.checkSelfPermission(this, p) != PackageManager.PERMISSION_GRANTED) {
+                          toRequest.add(p);
+                      }
+                  }
+                  if (!toRequest.isEmpty()) {
+                      ActivityCompat.requestPermissions(this, toRequest.toArray(new String[0]), PERM_REQUEST_CODE);
+                  }
+              }
+          }
+          EOF
+
+      - name: Compilar archivo ejecutable APK (Gradle)
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+          cp app/build/outputs/apk/debug/app-debug.apk ../FarmaciaDB.apk
+
+      - name: Subir FarmaciaDB.apk listo para descargar e instalar
+        uses: actions/upload-artifact@v4
+        with:
+          name: FarmaciaDB-Android-APK
+          path: FarmaciaDB.apk
+          retention-days: 30

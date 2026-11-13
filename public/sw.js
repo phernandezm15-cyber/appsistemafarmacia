@@ -1,4 +1,4 @@
-const CACHE_NAME = 'farmaciadb-v1';
+const CACHE_NAME = 'farmaciadb-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -34,8 +34,15 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Pass API requests to network
-  if (event.request.url.includes('/api/')) {
+  // Only handle same-origin GET requests; ignore extensions, API routes, and AI Studio internal scripts
+  if (event.request.method !== 'GET') return;
+
+  const url = event.request.url;
+  if (
+    !url.startsWith(self.location.origin) ||
+    url.includes('/api/') ||
+    url.includes('/_aistudio')
+  ) {
     return;
   }
 
@@ -52,15 +59,17 @@ self.addEventListener('fetch', (event) => {
   // Stale-while-revalidate for static assets
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-        }
-        return networkResponse;
-      }).catch(() => cachedResponse);
+      const fetchPromise = fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => cachedResponse);
 
       return cachedResponse || fetchPromise;
     })
