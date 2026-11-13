@@ -15,6 +15,7 @@ import { exec } from 'child_process';
 import util from 'util';
 import { createRequire } from 'module';
 import jwt from 'jsonwebtoken';
+import JSZip from 'jszip';
 
 import { generateExpertPharmacyReply } from './src/lib/pharmacy-ai-engine.ts';
 import { seedDatabaseIfEmpty } from './src/db/seed.ts';
@@ -530,6 +531,45 @@ app.post('/api/ai/chat', async (req: Request, res: Response) => {
     return res.status(500).json({
       error: err.message || 'Error al procesar la solicitud con el asistente de IA',
     });
+  }
+});
+
+// ==========================================
+// 8. DESCARGA DEL PROYECTO NATIVO KOTLIN ANDROID
+// ==========================================
+
+app.get('/api/android/native-project.zip', async (_req: Request, res: Response) => {
+  try {
+    const nativeDir = path.resolve(__dirname, 'android-native-app');
+    if (!fs.existsSync(nativeDir)) {
+      return res.status(404).json({ error: 'Proyecto nativo Android no encontrado' });
+    }
+
+    const zip = new JSZip();
+
+    const addDirRecursive = async (dir: string, zipFolder: JSZip) => {
+      const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          const sub = zipFolder.folder(entry.name);
+          if (sub) await addDirRecursive(fullPath, sub);
+        } else {
+          const data = await fs.promises.readFile(fullPath);
+          zipFolder.file(entry.name, data);
+        }
+      }
+    };
+
+    await addDirRecursive(nativeDir, zip);
+    const buffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="FarmaciaDB-Android-Nativo-Kotlin.zip"');
+    return res.send(buffer);
+  } catch (err: any) {
+    console.error('Error empaquetando proyecto nativo Android:', err);
+    return res.status(500).json({ error: err.message || 'Error generando ZIP nativo' });
   }
 });
 

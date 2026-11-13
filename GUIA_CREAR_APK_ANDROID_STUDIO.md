@@ -1,51 +1,38 @@
-# 📱 Cómo Generar el Archivo `.APK` Nativo Real (Aplicación Android Independiente)
+# 📱 FarmaciaDB Android Nativo (Kotlin + Jetpack Compose desde Cero)
 
-Este proyecto está configurado con **Capacitor** en modo **Standalone Nativo** (`webDir: "dist"` en `capacitor.config.json`), lo que significa que la aplicación se **empaqueta completa dentro del archivo `.apk`** (no es un acceso directo de Chrome ni un enlace web).
-
----
-
-## ⚡ Método 1: Compilar el `.APK` automáticamente desde tu GitHub (Sin instalar Android Studio)
-
-Ya se incluyó el archivo `.github/workflows/build-apk.yml` en el proyecto. Si ya tienes el código en GitHub, GitHub puede compilar el archivo ejecutable **`FarmaciaDB.apk`** por ti en la nube:
-
-1. Sube los archivos del proyecto a tu repositorio de GitHub (`main` o `master`).
-2. Entra a tu repositorio en GitHub y haz clic en la pestaña **Actions** (arriba).
-3. Verás el flujo llamado **"Compilar FarmaciaDB Android APK"**.
-   - Se ejecuta automáticamente en cada push, o puedes ejecutarlo manualmente tocando **Run workflow**.
-4. Espera ~2 minutos a que aparezca el cheque verde ✅.
-5. Baja hasta la sección **Artifacts** y haz clic en **`FarmaciaDB-Android-APK`**.
-6. Descomprime el ZIP descargado: adentro está tu ejecutable real **`FarmaciaDB.apk`**, listo para enviarlo por WhatsApp, Telegram o USB e instalarlo en cualquier celular Android.
+Este repositorio ahora incluye en la carpeta **`android-native-app/`** la aplicación **100% nativa de Android escrita desde cero en Kotlin, Jetpack Compose Material 3, SQLite, SpeechRecognizer y CameraX + ML Kit** (sin usar WebView, HTML ni navegador).
 
 ---
 
-## 🛠️ Método 2: Compilar el `.APK` en tu computadora con Android Studio
+## ⚡ Opción 1: Generar el `.APK` Nativo en GitHub automáticamente
 
-Si prefieres compilarlo directamente en tu PC:
+1. Sube la carpeta **`android-native-app/`** y el archivo **`.github/workflows/build-apk.yml`** a tu repositorio de GitHub.
+2. En GitHub entra a la pestaña **Actions**.
+3. Selecciona **"Compilar FarmaciaDB Android APK Nativo"** (o pulsa **Run workflow**).
+4. Al terminar (~2 min), baja el archivo de **Artifacts** llamado **`FarmaciaDB-Nativo-APK`**.
+5. Descomprime el ZIP y obtendrás **`FarmaciaDB-Nativo.apk`** listo para pasar por WhatsApp, Telegram o USB e instalar en tu teléfono Android.
 
-1. Asegúrate de tener instalado [Node.js](https://nodejs.org/) (v18+) y [Android Studio](https://developer.android.com/studio).
-2. Abre la terminal dentro de la carpeta del proyecto y ejecuta:
-   ```bash
-   npm install
-   npm install @capacitor/core @capacitor/android @capacitor/cli
-   npm run build
-   npx cap add android
-   npx cap sync android
-   npx cap open android
-   ```
-3. Espera a que Android Studio termine de sincronizar Gradle (*Gradle sync finished*).
-4. En el menú superior ve a:
+---
+
+## 🛠️ Opción 2: Abrir y Compilar en Android Studio
+
+1. Descarga el proyecto nativo desde el botón **"App Nativa Kotlin / APK"** en la app (o usa la carpeta `android-native-app/` de tu repositorio).
+2. Abre **Android Studio**.
+3. Haz clic en **File > Open** y selecciona la carpeta **`android-native-app`**.
+4. Espera a que termine la sincronización de Gradle.
+5. Haz clic en:
    **Build > Build Bundle(s) / APK(s) > Build APK(s)**
-5. Al terminar, haz clic en **locate** en la notificación inferior derecha.
-6. Tu archivo ejecutable real estará en:
+6. Tu ejecutable nativo estará en:
    ```
-   android/app/build/outputs/apk/debug/app-debug.apk
+   android-native-app/app/build/outputs/apk/debug/app-debug.apk
    ```
-   Puedes renombrarlo a `FarmaciaDB.apk` e instalarlo en cualquier teléfono Android.
 
 ---
 
-## 🎙️ Permisos Nativos en el APK
-El flujo y el paquete nativo configuran automáticamente en `AndroidManifest.xml` y `MainActivity.java`:
-- `RECORD_AUDIO` y puente `WebChromeClient.onPermissionRequest` para que el buscador por voz y micrófono funcionen directo dentro del APK.
-- `CAMERA` para el escáner de códigos de barra.
-- `INTERNET` y respaldo offline local para que la app no falle sin conexión.
+## ✅ Módulos incluidos en código Kotlin nativo (`android-native-app/`)
+- **`FarmaciaDbHelper.kt`**: Base de datos SQLite nativa en el teléfono (usuarios, medicamentos, ventas transaccionales, compras, proveedores, clientes).
+- **`LoginScreen.kt`**: Inicio de sesión y registro con roles (Empleado / Administrador con clave maestra) y medidor de fortaleza de contraseña, sin usuarios predeterminados.
+- **`DashboardScreen.kt`**: Panel con ingresos, conteo de medicamentos, alertas de stock crítico y vencimientos.
+- **`PosScreen.kt`**: Punto de Venta con **Búsqueda por Voz Nativa (`NativeVoiceRecognizer.kt`)**, **Escáner de Código de Barras Nativo (`CameraX + ML Kit`)**, carrito de compras, descuentos, IVA 12% y ticket.
+- **`InventoryScreen.kt`**: CRUD completo de medicamentos con búsqueda por voz nativa.
+- **`OperationsScreens.kt`**: Compras (con recepción e incremento de stock), Proveedores, Clientes/Puntos, Reportes y Asistente Clínico IA con voz.
